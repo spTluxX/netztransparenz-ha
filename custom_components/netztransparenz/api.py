@@ -4,7 +4,6 @@ from __future__ import annotations
 import csv
 import io
 import logging
-from datetime import datetime, timedelta
 
 import aiohttp
 
@@ -57,50 +56,25 @@ async def async_get_token(
 
 
 async def async_fetch_marketpremium(
-    session: aiohttp.ClientSession, token: str, days_back: int = 120
+    session: aiohttp.ClientSession, token: str
 ) -> str:
-    """Fetch the market-value CSV.
-
-    Per the official endpoint list, 'data/marketpremium' takes NO date range,
-    so we call it plain first. A dated variant is tried as a fallback in case
-    the route ever changes.
-    """
-    headers = {"Authorization": f"Bearer {token}", "Accept": "text/plain"}
-    end = datetime.now()
-    start = end - timedelta(days=days_back)
-    fmt = "%Y-%m-%dT%H:%M:%S"
-    candidates = [
-        f"{API_BASE}/{DATA_PATH}",
-        f"{API_BASE}/{DATA_PATH}/{start.strftime(fmt)}/{end.strftime(fmt)}",
-    ]
-
-    last_status: int | None = None
-    for url in candidates:
-        try:
-            async with session.get(
-                url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)
-            ) as resp:
-                if resp.status in (401, 403):
-                    raise NtAuthError(
-                        f"Token not accepted for data (HTTP {resp.status})"
-                    )
-                if resp.status == 404:
-                    last_status = 404
-                    continue
-                resp.raise_for_status()
-                text = await resp.text()
-                if text.strip():
-                    return text
-                last_status = resp.status
-        except aiohttp.ClientResponseError as err:
-            last_status = err.status
-            continue
-        except aiohttp.ClientError as err:
-            raise NtApiError(f"Data request failed: {err}") from err
-
-    raise NtApiError(
-        f"No market-value data returned from the API (last HTTP {last_status})"
-    )
+    """Fetch the monthly market-value CSV (endpoint takes no date range)."""
+    url = f"{API_BASE}/{DATA_PATH}"
+    try:
+        async with session.get(
+            url,
+            headers={"Authorization": f"Bearer {token}", "Accept": "text/plain"},
+            timeout=aiohttp.ClientTimeout(total=30),
+        ) as resp:
+            if resp.status in (401, 403):
+                raise NtAuthError(f"Token not accepted for data (HTTP {resp.status})")
+            resp.raise_for_status()
+            text = await resp.text()
+            if not text.strip():
+                raise NtApiError("API returned an empty market-value response")
+            return text
+    except aiohttp.ClientError as err:
+        raise NtApiError(f"Data request failed: {err}") from err
 
 
 def _to_float(raw: str) -> float | None:
@@ -119,17 +93,33 @@ def _to_float(raw: str) -> float | None:
 
 
 def _match_column(header: list[str]) -> dict[str, int]:
-    """Map metric keys to column indices by header keywords (layout-agnostic)."""
+    """Map metric keys to column indices for the Monatsmarktwerte CSV (Format 12).
+
+    The header carries both 'MW …' (Marktwert) and 'PM …' (Marktprämie) columns;
+    we want the MW (market value) ones. The monthly spot reference is 'MW-EPEX'.
+    First match wins so the MW column is taken over any later PM column.
+    """
     idx: dict[str, int] = {}
     for i, cell in enumerate(header):
         h = cell.lower()
-        if "solar" in h and "wind" not in h and METRIC_SOLAR not in idx:
+        is_mw = "mw" in h  # 'mw solar', 'mw-epex', 'mw wind …' — excludes 'pm …'
+        if is_mw and "solar" in h and "wind" not in h and METRIC_SOLAR not in idx:
             idx[METRIC_SOLAR] = i
-        elif "wind" in h and ("land" in h or "onshore" in h):
+        elif (
+            is_mw
+            and "wind" in h
+            and ("onshore" in h or "land" in h)
+            and METRIC_WIND_ONSHORE not in idx
+        ):
             idx[METRIC_WIND_ONSHORE] = i
-        elif "wind" in h and ("see" in h or "offshore" in h):
+        elif (
+            is_mw
+            and "wind" in h
+            and ("offshore" in h or "see" in h)
+            and METRIC_WIND_OFFSHORE not in idx
+        ):
             idx[METRIC_WIND_OFFSHORE] = i
-        elif "spot" in h and METRIC_SPOT not in idx:
+        elif ("epex" in h or "spot" in h) and METRIC_SPOT not in idx:
             idx[METRIC_SPOT] = i
     return idx
 

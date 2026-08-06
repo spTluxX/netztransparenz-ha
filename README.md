@@ -10,7 +10,7 @@
 
 Pulls the official **monthly EEG market values** (Monatsmarktwerte) published by the German transmission system operators on [netztransparenz.de](https://www.netztransparenz.de) into Home Assistant, and exposes a ready-to-use **price sensor** you can drop straight into the Energy dashboard as your feed-in (or reference) price.
 
-The values come from the official [Netztransparenz WebAPI](https://api-portal.netztransparenz.de/) (`marketpremium` dataset) — no scraping, no screen-parsing.
+The values come from the official [Netztransparenz WebAPI](https://api-portal.netztransparenz.de/) (`marktpraemie` dataset) — no scraping, no screen-parsing.
 
 ## What you get
 
@@ -62,7 +62,7 @@ Tip: many feed-in contracts pay a percentage of MW Solar. If you want, create a 
 ## How it works
 
 - OAuth2 `client_credentials` → bearer token (`identity.netztransparenz.de`).
-- `GET /api/v1/data/marketpremium/{from}/{to}` → CSV (semicolon, German decimals).
+- `GET /api/v1/data/marktpraemie` → CSV (Format 12) (semicolon, German decimals).
 - The parser locates columns by header keywords (Solar / Wind / Spot), so it is resilient to column-order changes, and takes the most recently published month.
 - Polls every 12 hours (the data only changes monthly, so this simply catches the publication promptly).
 

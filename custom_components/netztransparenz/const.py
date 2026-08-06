@@ -17,8 +17,8 @@ CONF_PRICE_UNIT = "price_unit"
 # --- API -------------------------------------------------------------------
 TOKEN_URL = "https://identity.netztransparenz.de/users/connect/token"
 API_BASE = "https://ds.netztransparenz.de/api/v1"
-# Monthly EEG market values (Spotmarktpreis + MW Solar / Wind).
-DATA_PATH = "data/marketpremium"
+# Monthly EEG market values (Monatsmarktwerte) -> API "Format 12".
+DATA_PATH = "data/marktpraemie"
 
 DEFAULT_SCAN_INTERVAL = timedelta(hours=12)
 
@@ -33,7 +33,7 @@ METRICS: dict[str, dict[str, str]] = {
     METRIC_SOLAR: {"name": "Marktwert Solar", "icon": "mdi:solar-power"},
     METRIC_WIND_ONSHORE: {"name": "Marktwert Wind Onshore", "icon": "mdi:wind-turbine"},
     METRIC_WIND_OFFSHORE: {"name": "Marktwert Wind Offshore", "icon": "mdi:wind-turbine"},
-    METRIC_SPOT: {"name": "Spotmarktpreis", "icon": "mdi:transmission-tower"},
+    METRIC_SPOT: {"name": "Marktwert EPEX (Spot)", "icon": "mdi:transmission-tower"},
 }
 
 # --- Units -----------------------------------------------------------------
