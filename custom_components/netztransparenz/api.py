@@ -57,25 +57,50 @@ async def async_get_token(
 
 
 async def async_fetch_marketpremium(
-    session: aiohttp.ClientSession, token: str, days_back: int = 95
+    session: aiohttp.ClientSession, token: str, days_back: int = 120
 ) -> str:
-    """Fetch the market-value CSV for a window covering the last ~3 months."""
+    """Fetch the market-value CSV.
+
+    Per the official endpoint list, 'data/marketpremium' takes NO date range,
+    so we call it plain first. A dated variant is tried as a fallback in case
+    the route ever changes.
+    """
+    headers = {"Authorization": f"Bearer {token}", "Accept": "text/plain"}
     end = datetime.now()
     start = end - timedelta(days=days_back)
     fmt = "%Y-%m-%dT%H:%M:%S"
-    url = f"{API_BASE}/{DATA_PATH}/{start.strftime(fmt)}/{end.strftime(fmt)}"
-    try:
-        async with session.get(
-            url,
-            headers={"Authorization": f"Bearer {token}", "Accept": "text/plain"},
-            timeout=aiohttp.ClientTimeout(total=30),
-        ) as resp:
-            if resp.status in (401, 403):
-                raise NtAuthError(f"Token not accepted for data (HTTP {resp.status})")
-            resp.raise_for_status()
-            return await resp.text()
-    except aiohttp.ClientError as err:
-        raise NtApiError(f"Data request failed: {err}") from err
+    candidates = [
+        f"{API_BASE}/{DATA_PATH}",
+        f"{API_BASE}/{DATA_PATH}/{start.strftime(fmt)}/{end.strftime(fmt)}",
+    ]
+
+    last_status: int | None = None
+    for url in candidates:
+        try:
+            async with session.get(
+                url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
+                if resp.status in (401, 403):
+                    raise NtAuthError(
+                        f"Token not accepted for data (HTTP {resp.status})"
+                    )
+                if resp.status == 404:
+                    last_status = 404
+                    continue
+                resp.raise_for_status()
+                text = await resp.text()
+                if text.strip():
+                    return text
+                last_status = resp.status
+        except aiohttp.ClientResponseError as err:
+            last_status = err.status
+            continue
+        except aiohttp.ClientError as err:
+            raise NtApiError(f"Data request failed: {err}") from err
+
+    raise NtApiError(
+        f"No market-value data returned from the API (last HTTP {last_status})"
+    )
 
 
 def _to_float(raw: str) -> float | None:
