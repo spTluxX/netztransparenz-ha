@@ -1,9 +1,11 @@
 """Thin async client for the Netztransparenz WebAPI (market values)."""
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import logging
+from datetime import datetime
 
 import aiohttp
 
@@ -58,23 +60,49 @@ async def async_get_token(
 async def async_fetch_marketpremium(
     session: aiohttp.ClientSession, token: str
 ) -> str:
-    """Fetch the monthly market-value CSV (endpoint takes no date range)."""
-    url = f"{API_BASE}/{DATA_PATH}"
-    try:
-        async with session.get(
-            url,
-            headers={"Authorization": f"Bearer {token}", "Accept": "text/plain"},
-            timeout=aiohttp.ClientTimeout(total=30),
-        ) as resp:
-            if resp.status in (401, 403):
-                raise NtAuthError(f"Token not accepted for data (HTTP {resp.status})")
-            resp.raise_for_status()
-            text = await resp.text()
-            if not text.strip():
-                raise NtApiError("API returned an empty market-value response")
-            return text
-    except aiohttp.ClientError as err:
-        raise NtApiError(f"Data request failed: {err}") from err
+    """Fetch the monthly market-value CSV.
+
+    The 'marktpraemie' endpoint needs month/year parameters, but the docs don't
+    pin down their order/format. We try the likely patterns (a ~19-month window
+    ending this month) and use the first that returns CSV. Requests are spaced
+    to respect the API's 2-requests/second limit. On total failure the error
+    lists every attempt with its status so the correct pattern is obvious.
+    """
+    headers = {"Authorization": f"Bearer {token}", "Accept": "text/plain"}
+    now = datetime.now()
+    yf, mf, yt, mt = now.year - 1, 1, now.year, now.month
+    base = f"{API_BASE}/{DATA_PATH}"
+    candidates = [
+        f"{base}/{yf}/{mf}/{yt}/{mt}",
+        f"{base}/{mf}/{yf}/{mt}/{yt}",
+        f"{base}?yearFrom={yf}&monthFrom={mf}&yearTo={yt}&monthTo={mt}",
+        f"{base}?monthFrom={mf}&yearFrom={yf}&monthTo={mt}&yearTo={yt}",
+        base,
+    ]
+
+    attempts: list[str] = []
+    for i, url in enumerate(candidates):
+        if i:
+            await asyncio.sleep(0.6)  # stay under 2 req/s
+        try:
+            async with session.get(
+                url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
+                if resp.status in (401, 403):
+                    raise NtAuthError(
+                        f"Token not accepted for data (HTTP {resp.status})"
+                    )
+                text = await resp.text() if resp.status == 200 else ""
+                attempts.append(f"HTTP {resp.status} {url}")
+                if resp.status == 200 and text.strip() and ";" in text:
+                    _LOGGER.debug("marktpraemie OK via %s", url)
+                    return text
+        except aiohttp.ClientResponseError as err:
+            attempts.append(f"HTTP {err.status} {url}")
+        except aiohttp.ClientError as err:
+            raise NtApiError(f"Data request failed: {err}") from err
+
+    raise NtApiError("marktpraemie returned no data. Tried: " + " | ".join(attempts))
 
 
 def _to_float(raw: str) -> float | None:
