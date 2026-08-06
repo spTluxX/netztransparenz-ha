@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="brand/logo.png" alt="Netztransparenz Marktwerte" width="480">
+  <img src="custom_components/netztransparenz/brand/logo.png" alt="Netztransparenz Marktwerte" width="480">
 </p>
 
 # Netztransparenz Marktwerte — Home Assistant integration
