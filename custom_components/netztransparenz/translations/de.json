@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Netztransparenz Marktwerte",
+        "description": "Gib die API Client-ID und das Client-Secret ein, die du im Netztransparenz-Extranet (OAuth-Manager) erstellt hast. W\u00e4hle anschlie\u00dfend, welcher Wert den Preis-Sensor bestimmt.",
+        "data": {
+          "client_id": "Client-ID",
+          "client_secret": "Client-Secret",
+          "price_source": "Preisquelle",
+          "price_unit": "Preiseinheit"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Client-ID oder Client-Secret wurde abgelehnt.",
+      "cannot_connect": "Die Netztransparenz-API war nicht erreichbar. Bitte erneut versuchen."
+    },
+    "abort": {
+      "already_configured": "Dieser API-Client ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Preiseinstellungen",
+        "description": "W\u00e4hle, welchen Marktwert der Preis-Sensor abbildet und in welcher Einheit.",
+        "data": {
+          "price_source": "Preisquelle",
+          "price_unit": "Preiseinheit"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Netztransparenz Marktwerte",
+        "description": "Enter the API Client-ID and Client-Secret you created in the Netztransparenz Extranet (OAuth Manager). Then choose which value drives the Price sensor.",
+        "data": {
+          "client_id": "Client-ID",
+          "client_secret": "Client-Secret",
+          "price_source": "Price source",
+          "price_unit": "Price unit"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "The Client-ID or Client-Secret was rejected.",
+      "cannot_connect": "Could not reach the Netztransparenz API. Please try again."
+    },
+    "abort": {
+      "already_configured": "This API client is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Price settings",
+        "description": "Choose which market value the Price sensor reflects, and in which unit.",
+        "data": {
+          "price_source": "Price source",
+          "price_unit": "Price unit"
+        }
+      }
+    }
+  }
+}
