@@ -1,0 +1,50 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#063E2A"/>
+      <stop offset="0.55" stop-color="#128A50"/>
+      <stop offset="1" stop-color="#0FB39A"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#EAFBF1" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFE79A"/>
+      <stop offset="1" stop-color="#FFBE3D"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#00160D" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <!-- tile -->
+  <rect x="0" y="0" width="256" height="256" rx="58" fill="url(#bg)"/>
+
+  <!-- ascending bars (rising market value) -->
+  <g filter="url(#soft)">
+    <rect x="40"  y="150" width="28" height="46"  rx="8" fill="url(#bar)"/>
+    <rect x="78"  y="122" width="28" height="74"  rx="8" fill="url(#bar)"/>
+    <rect x="116" y="94"  width="28" height="102" rx="8" fill="url(#bar)"/>
+    <rect x="154" y="66"  width="28" height="130" rx="8" fill="url(#bar)"/>
+  </g>
+
+  <!-- baseline -->
+  <rect x="34" y="196" width="188" height="6" rx="3" fill="#FFFFFF" opacity="0.55"/>
+
+  <!-- trend line rising into the sun -->
+  <polyline points="54,150 92,122 130,94 168,66 200,56"
+            fill="none" stroke="#FFFFFF" stroke-width="7"
+            stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>
+
+  <!-- sun (solar) -->
+  <g>
+    <g stroke="url(#sun)" stroke-width="7" stroke-linecap="round">
+      <line x1="200" y1="18" x2="200" y2="6"/>
+      <line x1="226" y1="30" x2="235" y2="21"/>
+      <line x1="236" y1="56" x2="248" y2="56"/>
+      <line x1="174" y1="30" x2="165" y2="21"/>
+    </g>
+    <circle cx="200" cy="56" r="22" fill="url(#sun)" stroke="#FFFFFF" stroke-width="3"/>
+  </g>
+</svg>
