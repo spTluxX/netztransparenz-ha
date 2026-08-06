@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="brand/logo.png" alt="Netztransparenz Marktwerte" width="480">
+</p>
+
 # Netztransparenz Marktwerte — Home Assistant integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
